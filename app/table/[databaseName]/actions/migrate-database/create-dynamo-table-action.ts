@@ -47,7 +47,7 @@ export async function createDynamoTable({ tableName }: { tableName: string }) {
 
     if (Table?.TableStatus === "ACTIVE") {
       console.log("Table available!");
-      return;
+      return newTableName;
     }
 
     console.log("DynamoDB table not ready...");

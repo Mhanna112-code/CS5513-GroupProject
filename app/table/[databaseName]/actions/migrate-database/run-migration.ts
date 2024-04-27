@@ -66,11 +66,11 @@ export async function runDatabaseMigration(
 
   client.end();
 
-  const tableId = await createDynamoTable({
+  const tableName = await createDynamoTable({
     tableName: clientConfig.database,
   });
 
-  console.log("Table creation successful!", tableId);
+  console.log("Table creation successful!", tableName);
 
   // This map handles converting our SQL column types to their corresponding Dynamo definition.
   // It also handles de-duplicating columns which are duplicated
