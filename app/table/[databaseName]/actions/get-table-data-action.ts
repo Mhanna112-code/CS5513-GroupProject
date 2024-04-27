@@ -1,6 +1,6 @@
 "use server";
 import { Client, ClientConfig } from "pg";
-import { DbSchemaResponseSchema } from "./schemas";
+import { DbSchemaResponseSchema } from "../schemas";
 import { z } from "zod";
 
 export async function getTableData(
@@ -23,6 +23,8 @@ export async function getTableData(
   `);
 
   const rows = z.array(DbSchemaResponseSchema).parse(res.rows);
+
+  client.end();
 
   return rows;
 }

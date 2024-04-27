@@ -1,8 +1,9 @@
 import { ClientConfig } from "pg";
 import { TableSchemasDisplay } from "./table-schemas-display";
 import { Suspense } from "react";
-import { getTableData } from "./get-table-data-action";
+import { getTableData } from "./actions/get-table-data-action";
 import { z } from "zod";
+import { StartMigrationButton } from "./components/StartMigrationButton";
 
 export default function TableDisplay({
   params: { databaseName },
@@ -37,9 +38,13 @@ export default function TableDisplay({
         />
       </Suspense>
       <footer className="flex w-full bg-slate-800 px-4 py-2 justify-end">
-        <button className="px-4 py-2 dark:bg-slate-500 rounded-md">
-          Begin Migration
-        </button>
+        <StartMigrationButton
+          database={databaseName}
+          host={host}
+          port={port}
+          user={user}
+          password={password}
+        />
       </footer>
     </main>
   );

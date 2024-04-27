@@ -1,7 +1,7 @@
 import { ClientConfig } from "pg";
 import { TableSchemasDisplay } from "../table-schemas-display";
 import { forwardRef } from "react";
-import { getTableData } from "../get-table-data-action";
+import { getTableData } from "../actions/get-table-data-action";
 import { AgGridReact } from "ag-grid-react";
 
 export const TableDisplayBody = forwardRef<

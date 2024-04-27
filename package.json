@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.564.0",
     "ag-grid-react": "^31.2.0",
     "formik": "^2.4.5",
     "next": "14.1.4",
