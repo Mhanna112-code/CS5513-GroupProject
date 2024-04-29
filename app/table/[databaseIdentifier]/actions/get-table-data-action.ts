@@ -1,5 +1,5 @@
 "use server";
-import { Client, ClientConfig } from "pg";
+import { Client } from "pg";
 import { DbSchemaResponseSchema } from "../schemas";
 import { z } from "zod";
 import { getRdsDatabaseDetails } from "./migrate-database/get-rds-database-details";

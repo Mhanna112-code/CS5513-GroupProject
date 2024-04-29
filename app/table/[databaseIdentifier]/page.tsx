@@ -1,4 +1,3 @@
-import { ClientConfig } from "pg";
 import { TableSchemasDisplay } from "./table-schemas-display";
 import { Suspense } from "react";
 import { getTableData } from "./actions/get-table-data-action";
