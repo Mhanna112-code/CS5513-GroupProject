@@ -32,7 +32,7 @@ const dbInstanceSchema = z.object({
     Address: z.string(),
     Port: z.number(),
   }),
-  DBName: z.string(),
+  DBName: z.string().optional().default("postgres"),
   MasterUsername: z.string(),
   VpcSecurityGroups: z
     .array(
