@@ -15,16 +15,15 @@ export default async function Success() {
   }, [] as string[]);
 
   return (
-    <main className="flex justify-center items-center h-[100vh]">
-      <section className="flex flex-col p-8 rounded-md bg-slate-700 items-center max-w-[80%] gap-2">
-        <h1 className="text-lg text-white">First 10 DynamoDB Records</h1>
-        {/* Dynamic table generation based on data */}
-        <div className="overflow-auto">
-          <table className="w-full text-white">
+    <main className="flex justify-center items-center h-[100vh] bg-blue-500">
+      <section className="flex flex-col p-4 rounded-lg shadow-lg bg-blue-700 items-center" style={{ maxWidth: '1250px', width: '100%' }}>
+        <h1 className="text-md text-white font-bold">DynamoDB Records</h1>
+        <div className="overflow-auto" style={{ maxHeight: '700px', width: '1250px' }}>
+          <table className="w-full text-white text-xs">
             <thead>
               <tr>
                 {allKeys.map((key) => (
-                  <th key={key} className="px-4 py-2">
+                  <th key={key} className="px-2 py-1 bg-blue-700" style={{ position: 'sticky', top: 0, minWidth: '100px', maxWidth: '150px' }}>
                     {key}
                   </th>
                 ))}
@@ -34,7 +33,7 @@ export default async function Success() {
               {data.map((row, index) => (
                 <tr key={index}>
                   {allKeys.map((key) => (
-                    <td key={key} className="border px-4 py-2">
+                    <td key={key} className="border px-2 py-1">
                       {row[key] ? JSON.stringify(row[key]) : "N/A"}
                     </td>
                   ))}
