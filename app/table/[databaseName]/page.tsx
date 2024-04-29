@@ -39,11 +39,8 @@ export default function TableDisplay({
       </Suspense>
       <footer className="flex w-full bg-slate-800 px-4 py-2 justify-end">
         <StartMigrationButton
-          database={databaseName}
-          host={host}
-          port={port}
-          user={user}
-          password={password}
+          databaseIdentifier="cs5513-final-project"
+          databasePassword={password}
         />
       </footer>
     </main>
