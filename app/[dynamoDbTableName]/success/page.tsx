@@ -4,8 +4,6 @@ import { fetchTableData } from "./actions/fetch-table-data";
 export default async function Success() {
   const data = await fetchTableData("postgres");
 
-  console.log(data);
-
   // Extracting all unique keys for table headers from the data
   const allKeys = data.reduce((keys, item) => {
     Object.keys(item).forEach((key) => {
