@@ -253,7 +253,7 @@ async function setupReplicationInstance(
       // Wait 5s, then retry
       await new Promise((res) => setTimeout(res, 5000));
 
-      console.debug("Got access denied, retrying...");
+      // console.debug("Got access denied, retrying...");
       const { ReplicationInstance } = await dmsClient.send(
         createReplicationInstanceCommand
       );
