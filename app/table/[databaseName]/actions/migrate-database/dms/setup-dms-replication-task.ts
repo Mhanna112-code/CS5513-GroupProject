@@ -103,7 +103,7 @@ export async function setupDmsReplicationTask({
     }
 
     console.debug(
-      "Replication instance status: ",
+      "Replication instance creation status:",
       replicationInstance.ReplicationInstanceStatus
     );
 
