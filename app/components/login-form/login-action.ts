@@ -10,8 +10,6 @@ const ValuesSchema = z.object({
 });
 
 export async function loginAction(formValues: FormData) {
-  console.log("formValues", Object.fromEntries(formValues.entries()));
-
   let values;
   try {
     values = ValuesSchema.parse(Object.fromEntries(formValues.entries()));
