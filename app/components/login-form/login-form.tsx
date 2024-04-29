@@ -22,7 +22,7 @@ export function LoginForm() {
               password: res.password,
               host: res.host,
               port: res.port,
-              tableName: res.tableName,
+              databaseName: res.tableName,
             })
           );
         }
