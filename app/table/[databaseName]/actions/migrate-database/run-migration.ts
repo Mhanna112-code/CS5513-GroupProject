@@ -4,6 +4,7 @@ import { Client } from "pg";
 import { getRdsDatabaseDetails } from "./get-rds-database-details";
 import { setupDmsReplicationTask } from "./dms/setup-dms-replication-task";
 import { DatabaseMigrationService } from "@aws-sdk/client-database-migration-service";
+import { runReplicationTask } from "./dms/run-replication-task";
 
 export type SourceTableWithPrimaryKey = {
   tableName: string;
@@ -26,8 +27,7 @@ async function getAttributesForTables(
         .map((tableName) => `t.table_name = '${tableName}'`)
         .join("\nOR ")}) 
         AND t.constraint_type = 'PRIMARY KEY';
-        `),
-    ]);
+    `);
 
   return tablePrimaryKeys.map(({ column_name, table_name }) => ({
     schemaName: "public",
@@ -95,7 +95,18 @@ export async function runDatabaseMigration({
     sourceAttributes: attributesResult,
   });
 
-  console.log("Replication tasks set up successfully!");
+  console.log("Replication task set up successfully!");
+
+  console.log("===Starting the Migration===");
+
+  await runReplicationTask({
+    client: dmsClient,
+    replicationTaskArn,
+  });
+
+  console.log("===Migration Complete!===");
 
   postgresClient.end();
+
+  return { dynamoDbTableName };
 }
