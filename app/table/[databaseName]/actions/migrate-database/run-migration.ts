@@ -68,11 +68,7 @@ export async function runDatabaseMigration({
   if (!dynamoDbTableArn || !dynamoDbTableName)
     throw new Error("Failed to get DynamoDB table details");
 
-  console.log(
-    "Table creation successful!",
-    dynamoDbTableName,
-    dynamoDbTableArn
-  );
+  console.log("Table creation successful!");
 
   const dmsClient = new DatabaseMigrationService();
 
