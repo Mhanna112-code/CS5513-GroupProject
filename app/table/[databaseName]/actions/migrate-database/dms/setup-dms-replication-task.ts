@@ -377,7 +377,9 @@ function createTableMappingForTablesWithAttributes({
                     "target-attribute-name": "PK",
                     "attribute-type": "scalar",
                     "attribute-sub-type": "string",
-                    value: `\${${table.primaryKey}}`,
+                    value: `${table.tableName.toUpperCase()}#\${${
+                      table.primaryKey
+                    }}`,
                   },
                 ],
               },
