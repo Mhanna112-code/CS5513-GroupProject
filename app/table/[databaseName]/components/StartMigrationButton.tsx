@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState } from "react";
 import { runDatabaseMigration } from "../actions/migrate-database/run-migration";
 
 export function StartMigrationButton({
@@ -16,7 +16,9 @@ export function StartMigrationButton({
 
   return (
     <button
-      className={`px-4 py-2 rounded-md ${isDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-white'}`}
+      className={`px-4 py-2 rounded-md text-gray-800 ${
+        isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-white"
+      }`}
       disabled={isDisabled} // Button disabled based on state
       onClick={async () => {
         setIsDisabled(true); // Disable button when clicked
