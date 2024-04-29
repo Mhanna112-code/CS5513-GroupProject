@@ -2,16 +2,23 @@
 import { Client, ClientConfig } from "pg";
 import { DbSchemaResponseSchema } from "../schemas";
 import { z } from "zod";
+import { getRdsDatabaseDetails } from "./migrate-database/get-rds-database-details";
 
-export async function getTableData(
-  clientConfig: Pick<
-    ClientConfig,
-    "host" | "port" | "user" | "password" | "database"
-  >
-) {
+export async function getTableData({
+  databaseIdentifier,
+  databasePassword,
+}: {
+  databaseIdentifier: string;
+  databasePassword: string;
+}) {
+  const dbConfig = await getRdsDatabaseDetails(databaseIdentifier);
   // Create connection
   const client = new Client({
-    ...clientConfig,
+    host: dbConfig.host,
+    port: dbConfig.port,
+    database: dbConfig.database,
+    user: dbConfig.user,
+    password: databasePassword,
     ssl: true,
   });
   // Connect to database server

@@ -6,10 +6,10 @@ import { z } from "zod";
 import { StartMigrationButton } from "./components/StartMigrationButton";
 
 export default function TableDisplay({
-  params: { databaseName },
+  params: { databaseIdentifier },
   searchParams,
 }: {
-  params: { databaseName: string };
+  params: { databaseIdentifier: string };
   searchParams: unknown;
 }) {
   let parsedSearchParams;
@@ -19,22 +19,19 @@ export default function TableDisplay({
     throw new Error("Invalid search params", { cause: error });
   }
 
-  const { host, password, port, user } = parsedSearchParams;
+  const { password } = parsedSearchParams;
 
   return (
     <main className="flex flex-col">
       <header className="w-full bg-slate-600 px-4 py-2 text-slate-100">
         <h1>
-          &apos;<b>{databaseName}</b>&apos; Database Tables
+          &apos;<b>{databaseIdentifier}</b>&apos; Database Tables
         </h1>
       </header>
       <Suspense fallback={<div className="w-full h-full p-4">Loading...</div>}>
         <TableDisplayBody
-          database={databaseName}
-          host={host}
-          port={port}
-          user={user}
-          password={password}
+          databaseIdentifier="cs5513-final-project"
+          databasePassword={password}
         />
       </Suspense>
       <footer className="flex w-full bg-slate-800 px-4 py-2 justify-end">
@@ -48,13 +45,14 @@ export default function TableDisplay({
   );
 }
 
-async function TableDisplayBody(
-  clientConfig: Pick<
-    ClientConfig,
-    "host" | "port" | "user" | "password" | "database"
-  >
-) {
-  const rows = await getTableData(clientConfig);
+async function TableDisplayBody({
+  databaseIdentifier,
+  databasePassword,
+}: {
+  databaseIdentifier: string;
+  databasePassword: string;
+}) {
+  const rows = await getTableData({ databaseIdentifier, databasePassword });
 
   return <TableSchemasDisplay schemas={rows} />;
 }
@@ -62,29 +60,20 @@ async function TableDisplayBody(
 // #region Page URL Config
 
 const tableListPageSearchParamSchema = z.object({
-  host: z.string(),
-  port: z.preprocess((val) => Number(val), z.number()),
-  user: z.string(),
   password: z.string(),
 });
 
 type TableListPageSearchParams = z.infer<typeof tableListPageSearchParamSchema>;
 
 export function buildTableListPageUrl({
-  host,
-  port,
-  user,
   password,
-  databaseName,
-}: TableListPageSearchParams & { databaseName: string }) {
+  databaseIdentifier,
+}: TableListPageSearchParams & { databaseIdentifier: string }) {
   const params = new URLSearchParams({
-    host,
-    port: port.toString(),
-    user,
     password,
   });
 
-  return `/table/${databaseName}?${params}`;
+  return `/table/${databaseIdentifier}?${params}`;
 }
 
 // #endregion
