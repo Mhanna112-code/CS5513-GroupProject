@@ -15,27 +15,17 @@ async function getAttributesForTables(
   client: Client,
   tableNames: [string, ...string[]]
 ): Promise<SourceTableWithPrimaryKey[]> {
-  const [{ rows: tableAttributes }, { rows: tablePrimaryKeys }] =
-    await Promise.all([
-      client.query<{ column_name: string; data_type: string }>(`
-          SELECT DISTINCT column_name, data_type
-          FROM information_schema.columns
-          WHERE table_schema = 'public'
-          AND ${tableNames
-            .map((tableName) => `table_name = '${tableName}'`)
-            .join("\nOR ")}
-        `),
-      client.query<{
-        column_name: string;
-        table_name: string;
-      }>(`SELECT c.column_name, t.table_name
-          FROM information_schema.key_column_usage AS c
-          LEFT JOIN information_schema.table_constraints AS t
-          ON t.constraint_name = c.constraint_name
-          WHERE (${tableNames
-            .map((tableName) => `t.table_name = '${tableName}'`)
-            .join("\nOR ")}) 
-            AND t.constraint_type = 'PRIMARY KEY';
+  const { rows: tablePrimaryKeys } = await client.query<{
+    column_name: string;
+    table_name: string;
+  }>(`SELECT c.column_name, t.table_name
+      FROM information_schema.key_column_usage AS c
+      LEFT JOIN information_schema.table_constraints AS t
+      ON t.constraint_name = c.constraint_name
+      WHERE (${tableNames
+        .map((tableName) => `t.table_name = '${tableName}'`)
+        .join("\nOR ")}) 
+        AND t.constraint_type = 'PRIMARY KEY';
         `),
     ]);
 
