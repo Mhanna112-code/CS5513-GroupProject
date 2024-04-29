@@ -31,10 +31,12 @@ export async function createDynamoTable({ tableName }: { tableName: string }) {
   });
 
   let newTableName: string | undefined;
+  let newTableArn: string | undefined;
   try {
     const creationResult = await dynamoDbClient.send(createTableCommand);
 
     newTableName = creationResult.TableDescription?.TableName;
+    newTableArn = creationResult.TableDescription?.TableArn;
   } catch (error) {
     console.error("Failed to create DynamoDB Table!", error);
     throw new Error("DynamoDB creation failed!");
@@ -46,12 +48,14 @@ export async function createDynamoTable({ tableName }: { tableName: string }) {
     );
 
     if (Table?.TableStatus === "ACTIVE") {
-      console.log("Table available!");
-      return newTableName;
+      // console.debug("Table available!");
+      break;
     }
 
-    console.log("DynamoDB table not ready...");
+    // console.debug("DynamoDB table not ready...");
     await new Promise((res) => setTimeout(res, 5000));
-    console.log("Checking status again");
+    // console.debug("Checking status again");
   }
+
+  return { tableName: newTableName, arn: newTableArn } as const;
 }
