@@ -211,8 +211,7 @@ async function createDynamoDBServiceAccessRole(iamClient: IAMClient) {
 
   await iamClient.send(
     new AttachRolePolicyCommand({
-      // We need to create a dms-vpc-role (CreateReplicationInstanceCommand tries to invoke it)
-      RoleName: "dms-vpc-role",
+      RoleName: "dms-ddb-access-role",
       // This is a default AWS policy we want to make sure this role gets. In a production environment, we might
       // define a more restrictive IAM role here.
       PolicyArn: "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
