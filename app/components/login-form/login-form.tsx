@@ -1,12 +1,14 @@
 "use client";
 import { TextInput } from "@/components/TextInput";
 import { loginAction } from "./login-action";
-import { LoginFormErrorSection } from "./error-section";
 import { useRouter } from "next/navigation";
-import { buildTableListPageUrl } from "@/app/table/[databaseName]/page";
+import { buildTableListPageUrl } from "@/app/table/[databaseIdentifier]/page";
+import { useState } from "react";
 
 export function LoginForm() {
   const router = useRouter();
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   return (
     <form
@@ -15,26 +17,29 @@ export function LoginForm() {
 
         console.log("Action res", res);
 
-        if (res.success) {
-          router.push(
-            buildTableListPageUrl({
-              user: res.user,
-              password: res.password,
-              host: res.host,
-              port: res.port,
-              databaseName: res.tableName,
-            })
-          );
+        if (!res.success) {
+          setErrorMessage(res.reason);
+          return;
         }
+
+        router.push(
+          buildTableListPageUrl({
+            databaseIdentifier: res.databaseIdentifier,
+            password: res.password,
+          })
+        );
       }}
       className="flex flex-col gap-4"
     >
-      <LoginFormErrorSection />
+      {errorMessage ? (
+        <p className="rounded-md px-4 py-2 bg-red-500 border-red-800 text-white">
+          {errorMessage}
+        </p>
+      ) : null}
       <TextInput
-        id="user"
-        name="user"
-        label="Username"
-        placeholder="user"
+        id="databaseIdentifier"
+        name="databaseIdentifier"
+        label="Database Identifier"
         required
       />
       <TextInput
@@ -44,11 +49,14 @@ export function LoginForm() {
         type="password"
         required
       />
-      <TextInput id="host" name="host" label="Host" />
-      <TextInput id="port" name="port" label="Port" placeholder="5432" />
-      <TextInput id="database" name="database" label="Database" />
       <footer className="flex w-full px-4 py-2 dark:bg-slate-500 rounded-md">
-        <button className="w-full rounded-sm" type="submit">
+        <button
+          className="w-full rounded-sm"
+          type="submit"
+          onClick={() => {
+            setErrorMessage(null);
+          }}
+        >
           Sign In
         </button>
       </footer>
