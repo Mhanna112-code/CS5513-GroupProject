@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { runDatabaseMigration } from "../actions/migrate-database/run-migration";
+import { useRouter } from "next/navigation";
+import { createSuccessPageUrl } from "@/app/[dynamoDbTableName]/success/page";
 
 export function StartMigrationButton({
   databaseIdentifier,
@@ -14,6 +16,8 @@ export function StartMigrationButton({
   // State to control the disabled status of the button
   const [isDisabled, setIsDisabled] = useState(false);
 
+  const router = useRouter();
+
   return (
     <button
       className={`px-4 py-2 rounded-md text-gray-800 ${
@@ -23,13 +27,15 @@ export function StartMigrationButton({
       onClick={async () => {
         setIsDisabled(true); // Disable button when clicked
         try {
-          await runDatabaseMigration({
+          const { dynamoDbTableName } = await runDatabaseMigration({
             rdsDatabaseInfo: {
               identifier: databaseIdentifier,
               password: databasePassword,
             },
             tableNames,
           });
+
+          router.push(createSuccessPageUrl(dynamoDbTableName));
         } finally {
           setIsDisabled(false); // Re-enable button after operation completes
         }
