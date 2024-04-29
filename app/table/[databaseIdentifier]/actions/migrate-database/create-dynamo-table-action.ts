@@ -42,6 +42,8 @@ export async function createDynamoTable({ tableName }: { tableName: string }) {
     throw new Error("DynamoDB creation failed!");
   }
 
+  // We don't want to assert this worked until the table is active, which can take some
+  // time.
   while (1) {
     const { Table } = await dynamoDbClient.send(
       new DescribeTableCommand({ TableName: newTableName })

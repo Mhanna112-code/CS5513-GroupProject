@@ -11,31 +11,14 @@ export type SourceTableWithPrimaryKey = {
   schemaName: string;
   primaryKey: string;
 };
-
-async function getAttributesForTables(
-  client: Client,
-  tableNames: [string, ...string[]]
-): Promise<SourceTableWithPrimaryKey[]> {
-  const { rows: tablePrimaryKeys } = await client.query<{
-    column_name: string;
-    table_name: string;
-  }>(`SELECT c.column_name, t.table_name
-      FROM information_schema.key_column_usage AS c
-      LEFT JOIN information_schema.table_constraints AS t
-      ON t.constraint_name = c.constraint_name
-      WHERE (${tableNames
-        .map((tableName) => `t.table_name = '${tableName}'`)
-        .join("\nOR ")}) 
-        AND t.constraint_type = 'PRIMARY KEY';
-    `);
-
-  return tablePrimaryKeys.map(({ column_name, table_name }) => ({
-    schemaName: "public",
-    primaryKey: column_name,
-    tableName: table_name,
-  }));
-}
-
+/**
+ * This function is our main database migration coordinator. It handles coordinating every
+ * step of the migration process:
+ *
+ * 1. Creating the DynamoDB table based on the existing tables'RDS data
+ * 2. Setting up the DMS replication task
+ * 3. Starting the DMS replication task
+ */
 export async function runDatabaseMigration({
   rdsDatabaseInfo,
   tableNames,
@@ -73,7 +56,7 @@ export async function runDatabaseMigration({
 
   await postgresClient.connect();
 
-  const attributesResult = await getAttributesForTables(
+  const attributesResult = await getPrimaryKeysForTables(
     postgresClient,
     tableNames
   );
@@ -109,4 +92,28 @@ export async function runDatabaseMigration({
   postgresClient.end();
 
   return { dynamoDbTableName };
+}
+
+async function getPrimaryKeysForTables(
+  client: Client,
+  tableNames: [string, ...string[]]
+): Promise<SourceTableWithPrimaryKey[]> {
+  const { rows: tablePrimaryKeys } = await client.query<{
+    column_name: string;
+    table_name: string;
+  }>(`SELECT c.column_name, t.table_name
+      FROM information_schema.key_column_usage AS c
+      LEFT JOIN information_schema.table_constraints AS t
+      ON t.constraint_name = c.constraint_name
+      WHERE (${tableNames
+        .map((tableName) => `t.table_name = '${tableName}'`)
+        .join("\nOR ")}) 
+        AND t.constraint_type = 'PRIMARY KEY';
+    `);
+
+  return tablePrimaryKeys.map(({ column_name, table_name }) => ({
+    schemaName: "public",
+    primaryKey: column_name,
+    tableName: table_name,
+  }));
 }

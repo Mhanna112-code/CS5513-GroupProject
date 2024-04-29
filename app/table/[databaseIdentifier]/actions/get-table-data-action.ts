@@ -24,6 +24,7 @@ export async function getTableData({
   // Connect to database server
   await client.connect();
 
+  // This selects all of the public tables in a PostgreSQL system.
   const res = await client.query(`
     SELECT * FROM pg_catalog.pg_tables
     WHERE schemaname = 'public';
