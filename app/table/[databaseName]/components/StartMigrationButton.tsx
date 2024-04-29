@@ -4,9 +4,11 @@ import { runDatabaseMigration } from "../actions/migrate-database/run-migration"
 export function StartMigrationButton({
   databaseIdentifier,
   databasePassword,
+  tableNames,
 }: {
   databaseIdentifier: string;
   databasePassword: string;
+  tableNames: [string, ...string[]];
 }) {
   return (
     <button
@@ -17,7 +19,7 @@ export function StartMigrationButton({
             identifier: databaseIdentifier,
             password: databasePassword,
           },
-          tableNames: ["customers", "suppliers"],
+          tableNames,
         });
       }}
     >

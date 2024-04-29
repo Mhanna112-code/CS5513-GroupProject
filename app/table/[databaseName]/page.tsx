@@ -41,6 +41,7 @@ export default function TableDisplay({
         <StartMigrationButton
           databaseIdentifier="cs5513-final-project"
           databasePassword={password}
+          tableNames={["customers", "suppliers"]}
         />
       </footer>
     </main>
