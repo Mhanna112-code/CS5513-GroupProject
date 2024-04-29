@@ -1,22 +1,15 @@
 "use client";
 import { useState } from "react";
-import { runDatabaseMigration } from "../actions/migrate-database/run-migration";
-import { useRouter } from "next/navigation";
-import { createSuccessPageUrl } from "@/app/[dynamoDbTableName]/success/page";
 
 export function StartMigrationButton({
-  databaseIdentifier,
-  databasePassword,
-  tableNames,
+  onClick,
 }: {
-  databaseIdentifier: string;
-  databasePassword: string;
-  tableNames: [string, ...string[]];
+  onClick?: () => Promise<unknown>;
 }) {
   // State to control the disabled status of the button
-  const [isDisabled, setIsDisabled] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const router = useRouter();
+  const isDisabled = isSubmitting;
 
   return (
     <button
@@ -25,23 +18,14 @@ export function StartMigrationButton({
       }
       disabled={isDisabled} // Button disabled based on state
       onClick={async () => {
-        setIsDisabled(true); // Disable button when clicked
-        try {
-          const { dynamoDbTableName } = await runDatabaseMigration({
-            rdsDatabaseInfo: {
-              identifier: databaseIdentifier,
-              password: databasePassword,
-            },
-            tableNames,
-          });
+        if (!onClick) return;
 
-          router.push(createSuccessPageUrl(dynamoDbTableName));
-        } finally {
-          setIsDisabled(false); // Re-enable button after operation completes
-        }
+        setIsSubmitting(true); // Disable button when clicked
+
+        await onClick().finally(() => setIsSubmitting(false));
       }}
     >
-      {isDisabled ? "Migrating..." : "Begin Migration"}
+      {isSubmitting ? "Migrating..." : "Begin Migration"}
     </button>
   );
 }
