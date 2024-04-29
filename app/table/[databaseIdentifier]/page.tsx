@@ -1,8 +1,7 @@
-import { TableSchemasDisplay } from "./table-schemas-display";
 import { Suspense } from "react";
 import { getTableData } from "./actions/get-table-data-action";
 import { z } from "zod";
-import { StartMigrationButton } from "./components/StartMigrationButton";
+import { TableDisplayBodyWithFooter } from "./components/table-display-body";
 
 export default function TableDisplay({
   params: { databaseIdentifier },
@@ -22,24 +21,17 @@ export default function TableDisplay({
 
   return (
     <main className="flex flex-col">
-      <header className="w-full bg-slate-600 px-4 py-2 text-slate-100">
-        <h1>
-          &apos;<b>{databaseIdentifier}</b>&apos; Database Tables
-        </h1>
-      </header>
       <Suspense fallback={<div className="w-full h-full p-4">Loading...</div>}>
+        <header className="w-full bg-slate-600 px-4 py-2 text-slate-100">
+          <h1>
+            &apos;<b>{databaseIdentifier}</b>&apos; Database Tables
+          </h1>
+        </header>
         <TableDisplayBody
-          databaseIdentifier="cs5513-final-project"
+          databaseIdentifier={databaseIdentifier}
           databasePassword={password}
         />
       </Suspense>
-      <footer className="flex w-full bg-slate-800 px-4 py-2 justify-end">
-        <StartMigrationButton
-          databaseIdentifier="cs5513-final-project"
-          databasePassword={password}
-          tableNames={["customers", "suppliers"]}
-        />
-      </footer>
     </main>
   );
 }
@@ -53,7 +45,13 @@ async function TableDisplayBody({
 }) {
   const rows = await getTableData({ databaseIdentifier, databasePassword });
 
-  return <TableSchemasDisplay schemas={rows} />;
+  return (
+    <TableDisplayBodyWithFooter
+      tables={rows}
+      databaseIdentifier={databaseIdentifier}
+      databasePassword={databasePassword}
+    />
+  );
 }
 
 // #region Page URL Config
