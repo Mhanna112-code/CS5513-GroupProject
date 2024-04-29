@@ -1,8 +1,8 @@
 import React from "react";
-import { fetchTableData } from "./actions/fetch-table-data";
+import { fetchDynamoDbTableData } from "./actions/fetch-dynamo-db-table-data";
 
 export default async function Success() {
-  const data = await fetchTableData("postgres");
+  const data = await fetchDynamoDbTableData("postgres");
 
   // Extracting all unique keys for table headers from the data
   const allKeys = data.reduce((keys, item) => {

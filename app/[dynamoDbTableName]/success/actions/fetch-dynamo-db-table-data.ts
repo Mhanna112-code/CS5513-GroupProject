@@ -2,7 +2,7 @@
 
 import { DynamoDB, ScanCommand } from "@aws-sdk/client-dynamodb";
 
-export async function fetchTableData(tableName: string) {
+export async function fetchDynamoDbTableData(tableName: string) {
   const client = new DynamoDB();
 
   const allItems = await client.send(
