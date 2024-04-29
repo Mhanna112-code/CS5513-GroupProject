@@ -20,9 +20,9 @@ export function StartMigrationButton({
 
   return (
     <button
-      className={`px-4 py-2 rounded-md text-gray-800 ${
-        isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-white"
-      }`}
+      className={
+        "px-4 py-2 rounded-md text-gray-800 bg-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+      }
       disabled={isDisabled} // Button disabled based on state
       onClick={async () => {
         setIsDisabled(true); // Disable button when clicked
@@ -41,7 +41,7 @@ export function StartMigrationButton({
         }
       }}
     >
-      Begin Migration
+      {isDisabled ? "Migrating..." : "Begin Migration"}
     </button>
   );
 }
