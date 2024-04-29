@@ -6,6 +6,7 @@ import {
   CreateReplicationTaskCommand,
   DatabaseMigrationService,
   DescribeReplicationInstancesCommand,
+  DescribeReplicationTasksCommand,
 } from "@aws-sdk/client-database-migration-service";
 import {
   AttachRolePolicyCommand,
@@ -46,6 +47,13 @@ export async function setupDmsReplicationTask({
 
   const iamClient = new IAMClient();
 
+  /**
+   * Our task needs 2 sets of permissions:
+   *
+   * 1. Access to DynamoDB to modify, create tables, and write into existing ones.
+   *    For more information on minimum specs, see [here](https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.DynamoDB.html#CHAP_Target.DynamoDB.Prerequisites).
+   * 2. Permissions for DMS to do its thing
+   */
   const [dynamoDbServiceAccessArn] = await Promise.all([
     createDynamoDBServiceAccessRole(iamClient),
     grantDmsAccessPermissions(iamClient),
@@ -77,6 +85,8 @@ export async function setupDmsReplicationTask({
 
   console.log("Target endpoint created!");
 
+  // We need to make sure the replication instance is good to go before we try to create the task.
+  // Otherwise, task creation will fail.
   while (1) {
     const replicationInstanceStatusRes = await client.send(
       new DescribeReplicationInstancesCommand({
@@ -111,14 +121,14 @@ export async function setupDmsReplicationTask({
       break;
     }
 
-    await new Promise((res) => setTimeout(res, 5000));
+    await new Promise((res) => setTimeout(res, 10_000));
   }
 
-  console.log("Replication task available!");
+  console.log("Replication instance available!");
 
   console.log("Creating replication task command...");
 
-  // Replication Task Setup
+  // Replication Task Setup. This is what actually drives the migration algorithm
   const { ReplicationTask } = await client.send(
     new CreateReplicationTaskCommand({
       TableMappings: JSON.stringify(
@@ -142,11 +152,91 @@ export async function setupDmsReplicationTask({
       "Failed to get valid replication task arn! We likely have set everything up but the ReplicationTask itself"
     );
 
-  console.log("Replication task created successfully!");
+  // We need to wait for the replication task to be created before we call this work done
+  while (1) {
+    const replicationTaskDescriptionRes = await client.send(
+      new DescribeReplicationTasksCommand({
+        Filters: [
+          { Name: "replication-task-arn", Values: [replicationTaskArn] },
+        ],
+      })
+    );
+
+    if (
+      replicationTaskDescriptionRes.ReplicationTasks?.[0].Status === "ready"
+    ) {
+      break;
+    }
+  }
+
+  console.log("Replication task command created!");
 
   return replicationTaskArn;
 }
 
+/**
+ * This function implements our migration algorithm at the DMS rule level
+ */
+function createTableMappingForTablesWithAttributes({
+  dynamoDbTableName,
+  tablesWithAttributes,
+}: {
+  dynamoDbTableName: string;
+  tablesWithAttributes: SourceTableWithPrimaryKey[];
+}) {
+  return {
+    rules: [
+      ...tablesWithAttributes
+        .map((table, idx) => {
+          const baseIdx = idx * 2;
+
+          const objectLocator = {
+            "schema-name": table.schemaName,
+            "table-name": table.tableName,
+          } as const;
+
+          return [
+            {
+              "rule-type": "selection",
+              "rule-id": baseIdx,
+              "rule-name": baseIdx,
+              "object-locator": objectLocator,
+              "rule-action": "explicit",
+            },
+            {
+              "rule-type": "object-mapping",
+              "rule-id": baseIdx + 1,
+              "rule-name": baseIdx + 1,
+              "rule-action": "map-record-to-record",
+              "object-locator": objectLocator,
+              "target-table-name": dynamoDbTableName,
+              "mapping-parameters": {
+                "partition-key-name": "PK",
+                "attribute-mappings": [
+                  {
+                    "target-attribute-name": "PK",
+                    "attribute-type": "scalar",
+                    "attribute-sub-type": "string",
+                    value: `#${table.tableName.toUpperCase()}_\${${
+                      table.primaryKey
+                    }}`,
+                  },
+                ],
+              },
+            },
+          ];
+        })
+        .flat(1),
+    ],
+  } as const;
+}
+
+/**
+ * This helper function handles creating the `dms-vpc-role`, a role DMS will look for when attempting to
+ * create the ReplicationInstance. It will error loudly without it.
+ *
+ * This role needs the `AmazonDMSVPCManagementRole`s Policy.
+ */
 async function grantDmsAccessPermissions(iamClient: IAMClient) {
   try {
     await iamClient.send(
@@ -224,6 +314,10 @@ async function createDynamoDBServiceAccessRole(iamClient: IAMClient) {
   return roleCreationResponse.Role.Arn;
 }
 
+/**
+ * This function handles setting up the replication instance, and doing some minor error handling for
+ * robustness
+ */
 async function setupReplicationInstance(
   dmsClient: DatabaseMigrationService,
   vpcSecurityGroupIds: string[]
@@ -274,6 +368,9 @@ async function setupReplicationInstance(
   return replicationInstance?.ReplicationInstanceArn;
 }
 
+/**
+ * This function handles creating our RDS Source Endpoint
+ */
 async function setupSourceEndpoint(
   client: DatabaseMigrationService,
   sourceConfig: {
@@ -308,6 +405,9 @@ async function setupSourceEndpoint(
   return sourceEndpointArn;
 }
 
+/**
+ * This function handles setting up our DynamoDB Target Endpoint
+ */
 async function setupTargetEndpoint(
   dmsClient: DatabaseMigrationService,
   dynamoDb: {
@@ -335,58 +435,4 @@ async function setupTargetEndpoint(
     );
 
   return targetEndpointArn;
-}
-
-function createTableMappingForTablesWithAttributes({
-  dynamoDbTableName,
-  tablesWithAttributes,
-}: {
-  dynamoDbTableName: string;
-  tablesWithAttributes: SourceTableWithPrimaryKey[];
-}) {
-  return {
-    rules: [
-      ...tablesWithAttributes
-        .map((table, idx) => {
-          const baseIdx = idx * 2;
-
-          const objectLocator = {
-            "schema-name": table.schemaName,
-            "table-name": table.tableName,
-          } as const;
-
-          return [
-            {
-              "rule-type": "selection",
-              "rule-id": baseIdx,
-              "rule-name": baseIdx,
-              "object-locator": objectLocator,
-              "rule-action": "explicit",
-            },
-            {
-              "rule-type": "object-mapping",
-              "rule-id": baseIdx + 1,
-              "rule-name": baseIdx + 1,
-              "rule-action": "map-record-to-record",
-              "object-locator": objectLocator,
-              "target-table-name": dynamoDbTableName,
-              "mapping-parameters": {
-                "partition-key-name": "PK",
-                "attribute-mappings": [
-                  {
-                    "target-attribute-name": "PK",
-                    "attribute-type": "scalar",
-                    "attribute-sub-type": "string",
-                    value: `#${table.tableName.toUpperCase()}_\${${
-                      table.primaryKey
-                    }}`,
-                  },
-                ],
-              },
-            },
-          ];
-        })
-        .flat(1),
-    ],
-  } as const;
 }
